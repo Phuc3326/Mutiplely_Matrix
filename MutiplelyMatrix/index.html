@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân Ma Trận Hình Chữ Nhật</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-center mb-6">Phần Mềm Nhân Ma Trận</h1>
+        
+        <!-- Nhập kích thước ma trận -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">Nhập Kích Thước Ma Trận</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-1">Ma trận A (hàng × cột):</label>
+                    <input id="rowsA" type="number" min="1" class="w-20 p-2 border rounded" placeholder="Hàng"> ×
+                    <input id="colsA" type="number" min="1" class="w-20 p-2 border rounded" placeholder="Cột">
+                </div>
+                <div>
+                    <label class="block mb-1">Ma trận B (hàng × cột):</label>
+                    <input id="rowsB" type="number" min="1" class="w-20 p-2 border rounded" placeholder="Hàng"> ×
+                    <input id="colsB" type="number" min="1" class="w-20 p-2 border rounded" placeholder="Cột">
+                </div>
+            </div>
+            <button onclick="createMatrices()" class="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Tạo Ma Trận</button>
+        </div>
+
+        <!-- Nhập giá trị ma trận -->
+        <div id="matrixInput" class="mb-6 hidden">
+            <h2 class="text-xl font-semibold mb-2">Nhập Giá Trị Ma Trận</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-medium">Ma trận A</h3>
+                    <div id="matrixA" class="grid gap-2"></div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium">Ma trận B</h3>
+                    <div id="matrixB" class="grid gap-2"></div>
+                </div>
+            </div>
+            <button onclick="multiplyMatrices()" class="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600">Tính Phép Nhân</button>
+        </div>
+
+        <!-- Kết quả -->
+        <div id="result" class="mb-6 hidden">
+            <h2 class="text-xl font-semibold mb-2">Kết Quả</h2>
+            <div id="matrixC" class="grid gap-2"></div>
+        </div>
+
+        <!-- Thông báo lỗi -->
+        <div id="error" class="text-red-500 hidden"></div>
+    </div>
+
+    <script>
+        function createMatrices() {
+            const rowsA = parseInt(document.getElementById('rowsA').value);
+            const colsA = parseInt(document.getElementById('colsA').value);
+            const rowsB = parseInt(document.getElementById('rowsB').value);
+            const colsB = parseInt(document.getElementById('colsB').value);
+
+            // Kiểm tra tính hợp lệ của kích thước
+            if (isNaN(rowsA) || isNaN(colsA) || isNaN(rowsB) || isNaN(colsB) || rowsA < 1 || colsA < 1 || rowsB < 1 || colsB < 1) {
+                showError('Vui lòng nhập kích thước hợp lệ (số nguyên dương).');
+                return;
+            }
+
+            // Kiểm tra điều kiện nhân ma trận
+            if (colsA !== rowsB) {
+                showError('Số cột của ma trận A phải bằng số hàng của ma trận B.');
+                return;
+            }
+
+            // Hiển thị ô nhập ma trận
+            document.getElementById('matrixInput').classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+
+            // Tạo ô nhập cho ma trận A
+            const matrixA = document.getElementById('matrixA');
+            matrixA.innerHTML = '';
+            matrixA.style.gridTemplateColumns = `repeat(${colsA}, minmax(0, 1fr))`;
+            for (let i = 0; i < rowsA; i++) {
+                for (let j = 0; j < colsA; j++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = `a_${i}_${j}`;
+                    input.className = 'p-2 border rounded';
+                    input.placeholder = `a[${i}][${j}]`;
+                    matrixA.appendChild(input);
+                }
+            }
+
+            // Tạo ô nhập cho ma trận B
+            const matrixB = document.getElementById('matrixB');
+            matrixB.innerHTML = '';
+            matrixB.style.gridTemplateColumns = `repeat(${colsB}, minmax(0, 1fr))`;
+            for (let i = 0; i < rowsB; i++) {
+                for (let j = 0; j < colsB; j++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = `b_${i}_${j}`;
+                    input.className = 'p-2 border rounded';
+                    input.placeholder = `b[${i}][${j}]`;
+                    matrixB.appendChild(input);
+                }
+            }
+        }
+
+        function multiplyMatrices() {
+            const rowsA = parseInt(document.getElementById('rowsA').value);
+            const colsA = parseInt(document.getElementById('colsA').value);
+            const rowsB = parseInt(document.getElementById('rowsB').value);
+            const colsB = parseInt(document.getElementById('colsB').value);
+
+            // Lấy giá trị ma trận A
+            const A = [];
+            for (let i = 0; i < rowsA; i++) {
+                A[i] = [];
+                for (let j = 0; j < colsA; j++) {
+                    const value = parseFloat(document.getElementById(`a_${i}_${j}`).value);
+                    if (isNaN(value)) {
+                        showError('Vui lòng nhập đầy đủ các giá trị số cho ma trận A.');
+                        return;
+                    }
+                    A[i][j] = value;
+                }
+            }
+
+            // Lấy giá trị ma trận B
+            const B = [];
+            for (let i = 0; i < rowsB; i++) {
+                B[i] = [];
+                for (let j = 0; j < colsB; j++) {
+                    const value = parseFloat(document.getElementById(`b_${i}_${j}`).value);
+                    if (isNaN(value)) {
+                        showError('Vui lòng nhập đầy đủ các giá trị số cho ma trận B.');
+                        return;
+                    }
+                    B[i][j] = value;
+                }
+            }
+
+            // Thực hiện phép nhân ma trận
+            const C = [];
+            for (let i = 0; i < rowsA; i++) {
+                C[i] = [];
+                for (let j = 0; j < colsB; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < colsA; k++) {
+                        sum += A[i][k] * B[k][j];
+                    }
+                    C[i][j] = sum;
+                }
+            }
+
+            // Hiển thị kết quả
+            const matrixC = document.getElementById('matrixC');
+            matrixC.innerHTML = '';
+            matrixC.style.gridTemplateColumns = `repeat(${colsB}, minmax(0, 1fr))`;
+            for (let i = 0; i < rowsA; i++) {
+                for (let j = 0; j < colsB; j++) {
+                    const div = document.createElement('div');
+                    div.className = 'p-2 border rounded bg-white text-center';
+                    div.textContent = C[i][j];
+                    matrixC.appendChild(div);
+                }
+            }
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
